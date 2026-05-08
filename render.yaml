@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: library-management
+    runtime: node
+    plan: free
+    buildCommand: npx prisma generate && npx prisma db push && npx prisma db seed && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
