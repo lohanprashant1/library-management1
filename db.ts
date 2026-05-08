@@ -1,17 +1,19 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
+import path from 'path';
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: PrismaClient | undefined;
+};
+
+function createPrismaClient() {
+  const dbPath = path.join(process.cwd(), 'db', 'custom.db');
+  const adapter = new PrismaLibSql({ url: `file:${dbPath}` });
+  return new PrismaClient({ adapter });
 }
 
-// In production or when Turso is configured, disable query logging for performance
-const isProduction = process.env.NODE_ENV === 'production';
-const hasTurso = !!process.env.TURSO_AUTH_TOKEN;
+export const db = globalForPrisma.prisma ?? createPrismaClient();
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: (isProduction || hasTurso) ? ['error'] : ['query'],
-  })
-
-if (!isProduction) globalForPrisma.prisma = db
+if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = db;
+}
